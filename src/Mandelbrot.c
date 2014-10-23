@@ -1,0 +1,194 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <SDL/SDL.h>
+#include <math.h>
+#include <time.h>
+#include "configSDL.h"
+#include "chargement.h"
+
+/** \file Mandelbrot.c
+* \author Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \brief Dessine un fractale a temps d'echappement
+* \date 14 Novembre 2011
+*/
+
+/*! \fn void fractale(int choix);
+* \author  Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \date 14 Novembre 2011
+* \brief Dessine une fractale du type Mandelbrot ou Julia
+* \param choix Choix de fractale entre 1 et 4
+* \param zoom valeur du zoom, grossissement de la fractale
+* \param abs decalage sur l'axe horizontal en fonction de l'appui sur les touches directionnelles
+* \param ord decalage sur l'axe vertical en fonction de l'appui sur les touches directionnelles
+*/
+
+void fractale(int choix, float zoom, int abs, int ord){
+
+    SDL_Surface *ecran = NULL, *pixel = NULL;
+	SDL_Rect position;
+
+    /*Evenement molette */
+    SDL_Event event;
+    int continuer=1;
+
+    /*Iteration*/
+    int iteration_max;
+    if(choix == 1|| choix==3)iteration_max = 50;
+    else if(choix == 2||choix == 4)iteration_max = 250;
+
+    /*Point */
+    float x1 = -2;
+    float y1 = -1.4;
+
+	int i = 0, x = 0, y = 0;
+	float tmp = 0;
+	float c_r, c_i, z_r, z_i;
+
+
+	int image_x;
+	int image_y;
+
+int val1,val2,val3,val4=0;
+	chargementModif("mandelfic.txt",&val1,&val2,&val3,&val4);
+
+image_x = val1;
+image_y = val2;
+if(zoom == -1)zoom=val3;
+if(val4 != 0) iteration_max = val4;
+
+
+
+    ecran = initialisationEcranTitre(ecran,image_x, image_y,"Fractale a temps d'echappement");
+	SDL_EnableKeyRepeat(10, 10);
+	pixel = initialisationPixel(pixel); /* Allocation du pixel*/
+
+	for(x = -abs; x < image_x-abs; x++)
+	{
+		for(y = -ord; y <  image_y-ord; y++)
+		{
+		
+            		position.x = x+abs;
+			position.y = y+ord;
+
+                if(choix == 1){/*mandelbrot*/
+                        c_r = x / zoom+ x1;
+                        c_i = (y) / zoom+ y1;
+                        z_r = 0;
+                        z_i = 0;
+                    }
+                if(choix ==2){/*autre fractale*/
+                        c_r = -0.7927;
+                        c_i = 0.1609;
+                        z_r = x / zoom + x1;
+                        z_i = y / zoom + y1;
+                    }
+                if(choix == 3  ){/*autre fractale*/
+                        c_r = -0.0986;
+                        c_i = -0.65186;
+                        z_r = (x / zoom) + x1;
+                        z_i = (y / zoom) + y1;
+                    }
+                if(choix==4){/*julia*/
+                        c_r = 0.287;
+                        c_i = 0.01;
+                        z_r = (x / zoom) + x1;
+                        z_i = (y / zoom) + y1;
+                    }
+                i = 0;
+				do{
+					tmp = z_r;
+					z_r = z_r * z_r - z_i * z_i + c_r;
+					z_i = 2 * z_i * tmp + c_i;
+					i++;
+				}while((z_r*z_r + z_i*z_i) < 4 && i < iteration_max);
+
+                    if(i == iteration_max){
+                        SDL_FillRect(pixel, NULL, SDL_MapRGB(pixel->format, 0, 0, 0));
+                    }
+                    else if(i < 255 && i > 120){
+                        SDL_FillRect(pixel, NULL, SDL_MapRGB(pixel->format, i*255/iteration_max, i*255/iteration_max, 0));
+                    }
+                    else if(i <= 120 && i > 20){
+                        SDL_FillRect(pixel, NULL, SDL_MapRGB(pixel->format, i*100/iteration_max, i*100/iteration_max, 0));
+                    }
+                    else if(i <= 20 && i >= 10){
+                        SDL_FillRect(pixel, NULL, SDL_MapRGB(pixel->format, 0, i*1400/iteration_max, 0));
+                    }
+                    else if(i <= 10 && i > 5){
+                        SDL_FillRect(pixel, NULL, SDL_MapRGB(pixel->format, 50, 0, i*200*255/iteration_max));
+                    }
+                    else if(i <= 5 && i >= 0){
+                        SDL_FillRect(pixel, NULL, SDL_MapRGB(pixel->format, 0, 0, i*25*255/iteration_max));
+                    }
+
+	       			SDL_BlitSurface(pixel, NULL, ecran, &position);
+		}
+		
+	}
+
+             while (continuer)
+        {
+        SDL_PollEvent(&event);
+        if( event.type == SDL_MOUSEBUTTONUP ){
+                    if( event.button.button == SDL_BUTTON_WHEELUP ){
+                                zoom=zoom+10;
+				continuer = 0;
+                                fractale(choix,zoom,abs,ord);
+
+                    }
+
+                }
+                else if( event.type == SDL_MOUSEBUTTONDOWN ){
+                    if( event.button.button == SDL_BUTTON_WHEELDOWN ){
+                                zoom=zoom-10;
+				continuer = 0;
+                                fractale(choix,zoom,abs,ord);
+                    }
+
+                }
+
+                switch(event.type){
+                    case SDL_QUIT:
+                        continuer = 0;
+                        break;
+                    case SDL_KEYDOWN:
+                        switch(event.key.keysym.sym){
+                                case SDLK_UP:
+				
+                                    ord=ord-100;
+					continuer = 0;
+                                   fractale(choix,zoom,abs,ord);
+				
+                                    break;
+                                case SDLK_DOWN:
+
+                                    ord=ord+100;
+					continuer = 0;
+                                    fractale(choix,zoom,abs,ord);
+
+                                    break;
+                                case SDLK_RIGHT:
+				
+
+                                    abs=abs-100;
+					continuer = 0;
+                                    fractale(choix,zoom,abs,ord);
+				
+                                    break;
+                                case SDLK_LEFT:
+
+                                    abs=abs+100;
+					continuer = 0;
+                                    fractale(choix,zoom,abs,ord);
+
+                                    break;
+                            }
+                            break;
+                }
+    SDL_Flip(ecran);
+          }
+    libererMem2(ecran, pixel);
+}
+

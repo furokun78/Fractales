@@ -1,0 +1,7 @@
+#ifndef DEF_LSYSTEM
+#define DEF_LSYSTEM
+
+void baseLSystem(int nb);
+void chargement(char chaine[],int *val1,int *val2,int *val3/*, char *grammaireImpote*/);
+#endif
+

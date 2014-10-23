@@ -1,0 +1,962 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <SDL/SDL.h>
+#include <math.h>
+#include <time.h>
+#include "configSDL.h"
+#include "Flame.h"
+
+/** \file Flame.c
+* \author Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \brief Dessine une fractale flamme
+* \date 14 Novembre 2011
+*/
+
+/*! \fn void toupie(float zoom,int abs,int ord,int **tab)
+* \author  Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \date 14 Novembre 2011
+* \brief Dessine une fractale flamme ayant pour forme une toupie
+* \param zoom valeur du zoom, grossissement de la fractale
+* \param abs decalage sur l'axe horizontal en fonction de l'appui sur les touches directionnelles
+* \param ord decalage sur l'axe vertical en fonction de l'appui sur les touches directionnelles
+* \param **tab tableau permettant de voir combien de fois un point apparait a une certaine coordonnee
+*/
+void toupie(float zoom,int abs,int ord,int **tab){
+	/* Initialisation des differentes variables */
+
+    	/*Evenement molette */
+    	SDL_Event event;
+    	int continuer=1;
+
+	int j,k,z;
+	int couleur;
+	int i1,i2,i3;
+	int i,r;
+	int val1,val2,val3,val4;
+
+	/* Determine la taille de l'image */
+	int image_x;
+	int image_y;
+
+    	/* Création de surface */
+	SDL_Surface *ecran = NULL, *pixel99 = NULL ;
+	SDL_Rect position1;
+	SDL_Rect position2;
+	SDL_Rect position3;
+
+    	/*variables servant  effectuer les calcules*/
+   	float rayon1, rayon2, rayon3;
+    	float a,b,c,d,e,f;/* un point est un couple de coordonnées*/
+	
+	/*chargement des donnes contenues dans flamme.txt*/
+	chargementModif("flamme.txt",&val1,&val2,&val3,&val4);
+
+	/*affectation des donnees recuperees aux variables du programme*/
+	image_x = val1;
+	image_y = val2;
+	if(zoom == -1)zoom = val3;
+
+	tab = (int*)malloc(image_x * sizeof(int*));
+	for(i3 = 0; i3 < image_x; i3++){
+		tab[i3] = (int)malloc(image_y * sizeof(int));
+	}
+
+	/*on initialise notre pixel*/
+	pixel99 = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1,32, 0, 0, 0, 0);
+	
+	/*initialisation des cases du tableau  0*/
+	for(i1=0;i1<image_x;i1++) {
+		for(i2=0;i2<image_y;i2++) {
+			tab[i1][i2] = 0;
+		}
+	}
+
+	/*activtion de la fonction aleatoire*/
+	srand(time(NULL));
+
+    	/* On affecte une valeur aux coordonnées des 3 points : (a,b) , (c,d) et (e,f)
+       	Ces trois points formeront un triangle imaginaire*/
+	a = 100*2;
+	b = 50*2;
+	c = 50*2;
+	d = 100*2;
+	e = 100*2;
+	f = 100*2;
+
+	/*Parametrage SDL*/
+	ecran = initialisationEcranTitre(ecran, image_x, image_y, "Flamme Toupie");
+  	
+
+
+    /* Fonction de traçage*/
+	for(i=0;i<val4;i++) {
+		/* Variable aléatoire = poids associé*/
+		r = rand() %10;
+
+		/* affectations aux trois rayons de leur valeur en fonction de leur point*/
+		rayon1 = sqrt(a * a + b * b);
+		rayon2 = sqrt(c * c + d * d);
+		rayon3 = sqrt(e * e + f * f);
+
+		if(r == 1){
+		    a = cos (a);
+		    b = cos (b);
+		    c = cos (c);
+		    d = cos (d);
+		    e = cos (e);
+		    f = cos (f);
+		}
+		else{
+		a = a * sin(rayon1 * rayon1) - b * cos(rayon1 * rayon1);
+		b = a * cos(rayon1 * rayon1) - b * sin(rayon1 * rayon1);
+		c = c * sin(rayon2 * rayon2) - d * cos(rayon2 * rayon2);
+		d = c * cos(rayon2 * rayon2) - d * sin(rayon2 * rayon2);
+		e = e * sin(rayon3 * rayon3) - f * cos(rayon3 * rayon3);
+		f = e * cos(rayon3 * rayon3) - f * sin(rayon3 * rayon3);
+		}
+
+		/*positionne les pixels / points au centre de l'ecran*/
+	   	position1.x = (a * zoom + image_x / 2)+abs;
+	    	position1.y = (b * zoom + image_y / 2)+ord;
+	    	position2.x = (c * zoom + image_x / 2)+abs;
+	   	position2.y = (d * zoom + image_y / 2)+ord;
+	    	position3.x = (e * zoom + image_x / 2)+abs;
+	   	position3.y = (f * zoom + image_y / 2)+ord;
+
+
+		if ((position1.x < image_x) && (position1.y < image_y) && (position1.x >=0) && (position1.y >=0)){
+		tab[(int)position1.x][(int)position1.y] = tab[(int)position1.x][(int)position1.y] +1;
+		}
+		if ((position2.x < image_x) && (position2.y < image_y) && (position2.x >=0) && (position2.y >=0)){
+		tab[(int)position2.x][(int)position2.y] = tab[(int)position2.x][(int)position2.y]+1;
+		}
+		if ((position3.x < image_x) && (position3.y < image_y) && (position3.x >=0) && (position3.y >=0)){
+		tab[(int)position3.x][(int)position3.y] =tab[(int)position3.x][(int)position3.y]+1;
+		}
+
+	}
+
+	for (j=0;j<image_x; j++){
+		for (k=0;k<image_y; k++){
+			if(j > 0 && k > 0 && j < image_x-1 && k < image_y-1){
+				couleur=(tab[j-1][k-1]+tab[j-1][k+1]+tab[j+1][k-1]+tab[j+1][k+1])/4;
+			}
+			
+			position1.x = j;
+			position1.y = k;
+			
+			SDL_FillRect(pixel99, NULL, SDL_MapRGB(pixel99->format, couleur, couleur, couleur));
+			SDL_BlitSurface(pixel99, NULL, ecran, &position1);
+		}
+	}
+
+    /*Dessine l'ecan et les elements collés*/
+
+     while (continuer)
+        {
+        SDL_PollEvent(&event);
+        if( event.type == SDL_MOUSEBUTTONUP ){
+                    if( event.button.button == SDL_BUTTON_WHEELUP ){
+                                zoom=zoom+10;
+				continuer = 0;
+                                toupie(zoom,abs,ord,tab);
+
+                    }
+
+                }
+                else if( event.type == SDL_MOUSEBUTTONDOWN ){
+                    if( event.button.button == SDL_BUTTON_WHEELDOWN ){
+                                zoom=zoom-10;
+				continuer = 0;
+                                toupie(zoom,abs,ord,tab);
+                    }
+
+                }
+
+                switch(event.type){
+                    case SDL_QUIT:
+                        continuer = 0;
+                        break;
+                    case SDL_KEYDOWN:
+                        switch(event.key.keysym.sym){
+                                case SDLK_UP:
+                                    ord=ord-100;
+				    continuer = 0;
+                                    toupie(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_DOWN:
+                                    ord=ord+100;
+    				    continuer = 0;
+                                    toupie(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_RIGHT:
+                                    abs=abs-100;
+				    continuer = 0;
+                                    toupie(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_LEFT:
+                                    abs=abs+100;
+				    continuer = 0;
+                                    toupie(zoom,abs,ord,tab);
+                                    break;
+                            }
+                            break;
+                }
+    		SDL_Flip(ecran);
+          }
+    /*Libere les données de l'ecran et du pixel*/
+    libererMem(ecran, pixel99);
+}
+/*! \fn void horizon(float zoom,int abs,int ord,int **tab)
+* \author  Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \date 14 Novembre 2011
+* \brief Dessine une fractale flamme ayant pour forme l'horizon
+* \param zoom valeur du zoom, grossissement de la fractale
+* \param abs decalage sur l'axe horizontal en fonction de l'appui sur les touches directionnelles
+* \param ord decalage sur l'axe vertical en fonction de l'appui sur les touches directionnelles
+* \param **tab tableau permettant de voir combien de fois un point apparait a une certaine coordonnee
+*/
+void horizon(float zoom,int abs,int ord,int **tab){
+    /* Initialisation des differentes variables
+       Variable de zoom*/
+
+    /*Evenement molette */
+    SDL_Event event;
+    int continuer=1;
+
+
+
+	int j,k,z;
+	int couleur;
+	int i1,i2,i3;
+	int i,r;
+	int val1,val2,val3,val4;
+
+	/* Determine la taille de l'image */
+	int image_x;
+	int image_y;
+
+    	/* Création de surface */
+	SDL_Surface *ecran = NULL, *pixel99 = NULL ;
+	SDL_Rect position1;
+	SDL_Rect position2;
+	SDL_Rect position3;
+
+    	float a,b,c,d,e,f;/* un point est un couple de coordonnées*/
+
+	/*chargement des donnes contenues dans flamme.txt*/
+	chargementModif("flamme.txt",&val1,&val2,&val3,&val4);
+
+	/*affectation des donnees recuperees aux variables du programme*/
+	image_x = val1;
+	image_y = val2;
+if(zoom == -1)zoom = val3;
+
+	tab = (int*)malloc(image_x * sizeof(int*));
+	for(i3 = 0; i3 < image_x; i3++){
+		tab[i3] = (int)malloc(image_y * sizeof(int));
+	}
+
+	/*on initialise notre pixel*/
+	pixel99 = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1,32, 0, 0, 0, 0);
+	
+	/*initialisation des cases du tableau  0*/
+	for(i1=0;i1<image_x;i1++) {
+		for(i2=0;i2<image_y;i2++) {
+			tab[i1][i2] = 0;
+		}
+	}
+
+    /* On affecte une valeur au 3 point : (a,b) , (c,d) et (e,f)*/
+	a = 100*2;
+	b = 50*2;
+	c = 50*2;
+	d = 100*2;
+	e = 100*2;
+	f = 100*2;
+
+    /* Parametrage SDL*/
+	ecran = initialisationEcranTitre(ecran, image_x, image_y, "Flamme Horizon");
+  	srand(time(NULL));
+
+
+    /*Fonction de traçage*/
+	for(i=0;i<val4;i++) {
+        r = rand() %10;
+        if(r == 1 || r == 2){
+            a = tan (a);
+            b = tan (b);
+            c = tan (c);
+            d = tan (d);
+            e = tan (e);
+            f = tan (f);
+        }
+        else{
+            a = cos (a);
+            b = tan (b);
+            c = sin (c);
+            d = tan (d);
+            e = cos (e);
+            f = sin (f);
+        }
+        /* positionne les pixels / points au centre de l'ecran*/
+    position1.x = (a * zoom + image_x / 2)+abs;
+    position1.y = (b * zoom + image_y / 2)+ord;
+    position2.x = (c * zoom + image_x / 2)+abs;
+    position2.y = (d * zoom + image_y / 2)+ord;
+    position3.x = (e * zoom + image_x / 2)+abs;
+    position3.y = (f * zoom + image_y / 2)+ord;
+
+		if ((position1.x < image_x) && (position1.y < image_y) && (position1.x >=0) && (position1.y >=0)){
+		tab[(int)position1.x][(int)position1.y] = tab[(int)position1.x][(int)position1.y] +1;
+		}
+		if ((position2.x < image_x) && (position2.y < image_y) && (position2.x >=0) && (position2.y >=0)){
+		tab[(int)position2.x][(int)position2.y] = tab[(int)position2.x][(int)position2.y]+1;
+		}
+		if ((position3.x < image_x) && (position3.y < image_y) && (position3.x >=0) && (position3.y >=0)){
+		tab[(int)position3.x][(int)position3.y] =tab[(int)position3.x][(int)position3.y]+1;
+		}
+	}
+
+
+	for (j=0;j<image_x; j++){
+		for (k=0;k<image_y; k++){
+			if(j > 0 && k > 0 && j < image_x-1 && k < image_y-1){
+				couleur=(tab[ja-1][ka-1]+tab[ja-1][ka]+tab[ja-1][ka+1]+tab[ja][ka-1]+tab[ja][ka+1]+tab[ja+1][ka-1]+tab[ja+1][ka]+tab[ja+1][ka+1])/8;
+			}
+			
+			position1.x = j;
+			position1.y = k;
+			
+			SDL_FillRect(pixel99, NULL, SDL_MapRGB(pixel99->format, couleur, couleur, couleur));
+			SDL_BlitSurface(pixel99, NULL, ecran, &position1);
+		}
+	}
+    /*Dessine l'ecan et les elements collés*/
+
+         while (continuer)
+        {
+        SDL_PollEvent(&event);
+        if( event.type == SDL_MOUSEBUTTONUP ){
+                    if( event.button.button == SDL_BUTTON_WHEELUP ){
+                                zoom=zoom+10;
+				continuer = 0;
+                                horizon(zoom,abs,ord,tab);
+
+                    }
+
+                }
+                else if( event.type == SDL_MOUSEBUTTONDOWN ){
+                    if( event.button.button == SDL_BUTTON_WHEELDOWN ){
+                                zoom=zoom-10;
+				continuer = 0;
+                                horizon(zoom,abs,ord,tab);
+                    }
+
+                }
+
+                switch(event.type){
+                    case SDL_QUIT:
+                        continuer = 0;
+                        break;
+                    case SDL_KEYDOWN:
+                        switch(event.key.keysym.sym){
+                                case SDLK_UP:
+                                    ord=ord+100;
+				continuer = 0;
+                                   horizon(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_DOWN:
+                                    ord=ord-100;
+				continuer = 0;
+                                    horizon(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_RIGHT:
+                                    abs=abs+100;
+				continuer = 0;
+                                    horizon(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_LEFT:
+                                    abs=abs-100;
+					continuer = 0;
+                                    horizon(zoom,abs,ord,tab);
+                                    break;
+                            }
+                            break;
+                }
+    SDL_Flip(ecran);
+          }
+    /*Libere les données les pixels*/
+    libererMem(ecran, pixel99);
+}
+
+
+
+/*! \fn void Heart(float zoom,int abs,int ord,int **tab)
+* \author  Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \date 14 Novembre 2011
+* \brief Dessine une fractale flamme ayant pour forme un coeur
+* \param zoom valeur du zoom, grossissement de la fractale
+* \param abs decalage sur l'axe horizontal en fonction de l'appui sur les touches directionnelles
+* \param ord decalage sur l'axe vertical en fonction de l'appui sur les touches directionnelles
+* \param **tab tableau permettant de voir combien de fois un point apparait a une certaine coordonnee
+*/
+void Heart(float zoom, int abs,int ord, int **tab){
+    /* Initialisation des differentes variables
+       Variable de couleur et de zoom*/
+    /*Evenement molette */
+    SDL_Event event;
+    int continuer=1;
+
+	int ja,ka,z,ia,r,m;
+	int couleur;
+	int i1,i2,i3;
+
+	int val1,val2,val3,val4;
+
+	/* Determine la taille de l'image */
+	int image_x;
+	int image_y;
+
+    	/* Création de surface */
+	SDL_Surface *ecran = NULL, *pixel99 = NULL ;
+	SDL_Rect position1;
+	SDL_Rect position2;
+	SDL_Rect position3;
+	SDL_Rect position4;
+	SDL_Rect position5;
+	SDL_Rect position6;
+
+
+	/*chargement des donnes contenues dans flamme.txt*/
+	chargementModif("flamme.txt",&val1,&val2,&val3,&val4);
+
+	/*affectation des donnees recuperees aux variables du programme*/
+	image_x = val1;
+	image_y = val2;
+	if(zoom == -1)zoom = val3;
+	tab = (int*)malloc(image_x * sizeof(int*));
+	for(i3 = 0; i3 < image_x; i3++){
+		tab[i3] = (int)malloc(image_y * sizeof(int));
+	}
+
+	/*on initialise notre pixel*/
+	pixel99 = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1,32, 0, 0, 0, 0);
+
+	/*initialisation des cases du tableau  0*/
+	for(i1=0;i1<image_x;i1++) {
+		for(i2=0;i2<image_y;i2++) {
+			tab[i1][i2] = 0;
+		}
+	}
+
+	srand(time(NULL));
+
+    float rayon1, rayon2, rayon3, rayon4, rayon5, rayon6, angle1, angle2, angle3, angle4, angle5, angle6;
+    float a,b,c,d,e,f,g,h,i,j,k,l; /* un point est défini par un couple de coordonnées*/
+
+    /* On affecte une valeur au 6 point : (a,b) , (c,d) , (e,f) (g,h) (i,j) et (k,l)*/
+	a = 100;
+	b = 100;
+	c = 800;
+	d = 400;
+	e = 100;
+	f = 800;
+	g = 100;
+	h = 600;
+	i = 200;
+	j = 350;
+	k = 450;
+	l = 700;
+
+    /* Parametrage SDL*/
+	ecran = initialisationEcranTitreCouleur(ecran, image_x, image_y, "Flamme Heart",0,0,0);
+
+
+    /*effectuer une fonction affine sur les coordonnées avant d'attaquer avec les fonctions non linéaires.*/
+    a = (4*a + 2*b);
+    b = (2*a + 4*b);
+    c = (4*c + 2*d);
+    d = (2*c + 4*d);
+    e = (4*e + 2*f);
+    f = (2*e + 4*f);
+    g = (4*g + 2*h);
+    h = (2*g + 4*h);
+    i = (4*i + 2*j);
+    j = (2*i + 4*j);
+    k = (4*k + 2*l);
+    l = (2*k + 4*l);
+
+    /* Fonction de traçage*/
+	for(m=0;m<val4;m++) {
+        r = rand() %10;
+        angle1 = atan (a/b); /*correspond au tetha de l'énoncé PDF*/
+        angle2 = atan (c/d);
+        angle3 = atan (e/f);
+        angle4 = atan (g/h);
+        angle5 = atan (i/j);
+        angle6 = atan (k/l);
+        rayon1 = sqrt(a * a + b * b); /* r du pdf*/
+        rayon2 = sqrt(c * c + d * d);
+        rayon3 = sqrt(e * e + f * f);
+        rayon4 = sqrt(g * g + h * h);
+        rayon5 = sqrt(i * i + j * j);
+        rayon6 = sqrt(k * k + l * l);
+
+       if(r == 8){ /* horseshoe*/
+            a = 1/rayon1 *((a-b)*(a+b));
+            b = 1/rayon1 * 2*a*b;
+            c = 1/rayon2 *((c-d)*(c+d));
+            d = 1/rayon2 *2*c*d;
+            e = 1/rayon3 *((e-f)*(e+f));
+            f = 1/rayon3 *2*e*f;
+            g = 1/rayon4 *((g-h)*(g+h));
+            h = 1/rayon4 *2*g*h;
+            i = 1/rayon5 *((i-j)*(i+j));
+            j = 1/rayon5 *2*i*j;
+            k = 1/rayon6 *((k-l)*(k+l));
+            l = 1/rayon6 *2*k*l;
+        }
+
+        else if(r == 6){ /* Swirl*/
+        a = a * sin(pow(rayon1,2)) - b * cos (pow(rayon1,2));
+        b = a * cos(pow(rayon1,2)) + b * sin (pow(rayon1,2));
+        c = c * sin(pow(rayon2,2)) - d * cos (pow(rayon2,2));
+        d = c * cos(pow(rayon2,2)) + d * sin (pow(rayon2,2));
+        e = e * sin(pow(rayon3,2)) - f * cos (pow(rayon3,2));
+        f = e * cos(pow(rayon3,2)) + f * sin (pow(rayon3,2));
+        g = g * sin(pow(rayon4,2)) - h * cos (pow(rayon4,2));
+        h = g * cos(pow(rayon4,2)) + h * sin (pow(rayon4,2));
+        i = i * sin(pow(rayon5,2)) - j * cos (pow(rayon5,2));
+        j = i * cos(pow(rayon5,2)) + j * sin (pow(rayon5,2));
+        k = k * sin(pow(rayon6,2)) - l * cos (pow(rayon6,2));
+        l = k * cos(pow(rayon6,2)) + l * sin (pow(rayon6,2));
+        }
+
+        else if(r == 4){ /* Handkerchief*/
+        a = rayon1 *sin(angle1+ rayon1);
+        b = cos (angle1 - rayon1);
+        c = rayon2 *sin(angle2+ rayon2);
+        d = cos (angle2 - rayon2);
+        e = rayon3 *sin(angle3+ rayon3);
+        f = cos (angle3 - rayon3);
+        g = rayon4 *sin(angle4+ rayon4);
+        h = cos (angle4 - rayon4);
+        i = rayon5 *sin(angle5+ rayon5);
+        j = cos (angle5 - rayon5);
+        k = rayon6 *sin(angle6+ rayon6);
+        l = cos (angle6 - rayon6);
+        }
+
+        else{ /*Heart*/
+        a = rayon1 * sin(angle1 * rayon1);
+        b = rayon1 * (- cos( angle1 * rayon1));
+        c = rayon2 * sin(angle2 * rayon2);
+        d = rayon2 * (- cos( angle2 * rayon2));
+        e = rayon3 * sin(angle3 * rayon3);
+        f = rayon3 * (- cos( angle3 * rayon3));
+        g = rayon4 * sin(angle4 * rayon4);
+        h = rayon4 * (- cos( angle4 * rayon4));
+        i = rayon5 * sin(angle5 * rayon5);
+        j = rayon5 * (- cos( angle5 * rayon5));
+        k = rayon6 * sin(angle6 * rayon6);
+        l = rayon6 * (- cos( angle6 * rayon6));
+           }
+
+    /*on centre la position du pixel au milieu de l'écran*/
+    position1.x = (a * zoom + image_x / 2)+abs;
+    position1.y = (b * zoom + image_y / 2)+ord;
+    position2.x = (c * zoom + image_x / 2)+abs;
+    position2.y = (d * zoom + image_y / 2)+ord;
+    position3.x = (e * zoom + image_x / 2)+abs;
+    position3.y = (f * zoom + image_y / 2)+ord;
+    position4.x = (g * zoom + image_x / 2)+abs;
+    position4.y = (h * zoom + image_y / 2)+ord;
+    position5.x = (i * zoom + image_x / 2)+abs;
+    position5.y = (j * zoom + image_y / 2)+ord;
+    position6.x = (k * zoom + image_x / 2)+abs;
+    position6.y = (l * zoom + image_y / 2)+ord;
+
+
+
+	 if (m >= 20){
+		if ((position1.x < image_x) && (position1.y < image_y) && (position1.x >=0) && (position1.y >=0)){
+		tab[(int)position1.x][(int)position1.y] = tab[(int)position1.x][(int)position1.y] +10;
+		}
+		if ((position2.x < image_x) && (position2.y < image_y) && (position2.x >=0) && (position2.y >=0)){
+		tab[(int)position2.x][(int)position2.y] = tab[(int)position2.x][(int)position2.y]+10;
+		}
+		if ((position3.x < image_x) && (position3.y < image_y) && (position3.x >=0) && (position3.y >=0)){
+		tab[(int)position3.x][(int)position3.y] =tab[(int)position3.x][(int)position3.y]+10;
+		}
+		if ((position4.x < image_x) && (position4.y < image_y) && (position4.x >=0) && (position4.y >=0)){
+		tab[(int)position4.x][(int)position4.y] = tab[(int)position4.x][(int)position4.y] +10;
+		}
+		if ((position5.x < image_x) && (position5.y < image_y) && (position5.x >=0) && (position5.y >=0)){
+		tab[(int)position5.x][(int)position5.y] = tab[(int)position5.x][(int)position5.y]+10;
+		}
+		if ((position6.x < image_x) && (position6.y < image_y) && (position6.x >=0) && (position6.y >=0)){
+		tab[(int)position6.x][(int)position6.y] =tab[(int)position6.x][(int)position6.y]+10;
+		}
+        }
+	}
+
+	for (ja=0;ja<image_x; ja++){
+		for (ka=0;ka<image_y; ka++){
+			if(ja > 0 && ka > 0 && ja < image_x-1 && ka < image_y-1){
+				couleur=(tab[ja-1][ka-1]+tab[ja-1][ka]+tab[ja-1][ka+1]+tab[ja][ka-1]+tab[ja][ka+1]+tab[ja+1][ka-1]+tab[ja+1][ka]+tab[ja+1][ka+1])/8;
+			}
+			
+			position1.x = ja;
+			position1.y = ka;
+			
+			SDL_FillRect(pixel99, NULL, SDL_MapRGB(pixel99->format, 0, couleur, 0));
+			SDL_BlitSurface(pixel99, NULL, ecran, &position1);
+		}
+	}
+
+     while (continuer)
+        {
+        SDL_PollEvent(&event);
+        if( event.type == SDL_MOUSEBUTTONUP ){
+                    if( event.button.button == SDL_BUTTON_WHEELUP ){
+                                zoom=zoom+10;
+				continuer = 0;
+                                Heart(zoom,abs,ord,tab);
+
+                    }
+
+                }
+                else if( event.type == SDL_MOUSEBUTTONDOWN ){
+                    if( event.button.button == SDL_BUTTON_WHEELDOWN ){
+                                zoom=zoom-10;
+				continuer = 0;
+                                Heart(zoom,abs,ord,tab);
+                    }
+
+                }
+
+                switch(event.type){
+                    case SDL_QUIT:
+                        continuer = 0;
+                        break;
+                    case SDL_KEYDOWN:
+                        switch(event.key.keysym.sym){
+                                case SDLK_UP:
+                                    ord=ord+100;
+					continuer = 0;
+                                   Heart(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_DOWN:
+                                    ord=ord-100;
+					continuer = 0;
+                                    Heart(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_RIGHT:
+                                    abs=abs+100;
+					continuer = 0;
+                                    Heart(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_LEFT:
+                                    abs=abs-100;
+					continuer = 0;
+                                    Heart(zoom,abs,ord,tab);
+                                    break;
+                            }
+                            break;
+                }
+    SDL_Flip(ecran);
+          }
+    /*Libere les données les pixels*/
+    libererMem(ecran,pixel99);
+}
+
+/*! \fn void Hyperbolic(float zoom,int abs,int ord,int **tab)
+* \author  Florian Chaulet Frederic Torcheux Pauline de Bouet du Portal.
+* \version 0.1
+* \date 14 Novembre 2011
+* \brief Dessine une fractale flamme ayant pour forme une hyperbole
+* \param zoom valeur du zoom, grossissement de la fractale
+* \param abs decalage sur l'axe horizontal en fonction de l'appui sur les touches directionnelles
+* \param ord decalage sur l'axe vertical en fonction de l'appui sur les touches directionnelles
+* \param **tab tableau permettant de voir combien de fois un point apparait a une certaine coordonnee
+*/
+void Hyperbolic(float zoom,int abs,int ord, int **tab){
+
+    /*Evenement molette */
+   	SDL_Event event;
+    	int continuer=1;
+	int val1,val2,val3,val4;
+	int i1,i2,i3;
+	int couleur;
+	int image_x,image_y;
+	int ja,ka;
+
+    	SDL_Surface *ecran=NULL, *pixel99=NULL;
+	SDL_Rect position1;
+	SDL_Rect position2;
+	SDL_Rect position3;
+	SDL_Rect position4;
+	SDL_Rect position5;
+	SDL_Rect position6;
+
+
+	/*chargement des donnes contenues dans flamme.txt*/
+	chargementModif("flamme.txt",&val1,&val2,&val3,&val4);
+
+	/*affectation des donnees recuperees aux variables du programme*/
+	image_x = val1;
+	image_y = val2;
+	if(zoom == -1)zoom = val3;
+	/*on initialise notre pixel*/
+	pixel99 = SDL_CreateRGBSurface(SDL_HWSURFACE, 1, 1,32, 0, 0, 0, 0);
+
+
+	/*initialisation des cases du tableau  0*/
+	tab = (int*)malloc(image_x * sizeof(int*));
+	for(i3 = 0; i3 < image_x; i3++){
+		tab[i3] = (int)malloc(image_y * sizeof(int));
+	}
+	for(i1=0;i1<image_x;i1++) {
+		for(i2=0;i2<image_y;i2++) {
+			tab[i1][i2] = 0;
+		}
+	}
+
+	int m,r;
+    	float rayon1, rayon2, rayon3, rayon4, rayon5, rayon6, angle1, angle2, angle3, angle4, angle5, angle6;
+    	float a,b,c,d,e,f,g,h,i,j,k,l; /* un point est défini par un couple de coordonnées*/
+
+	a = 400;
+	b = 100;
+	c = 400;
+	d = 200;
+	e = 300;
+	f = 400;
+	g = 500;
+	h = 600;
+	i = 700;
+	j = 700;
+	k = 800;
+	l = 800;
+
+	ecran = initialisationEcranTitreCouleur(ecran, image_x, image_y, "Flamme Hyperbolic",0,0,0);
+  	srand(time(NULL));
+
+
+ /* effectuer une fonction affine sur les coordonnées avant d'attaquer avec les fonctions non linéaires.*/
+    a = (4*a + 2*b);
+    b = (2*a + 4*b);
+    c = (4*c + 2*d);
+    d = (2*c + 4*d);
+    e = (4*e + 2*f);
+    f = (2*e + 4*f);
+    g = (4*g + 2*h);
+    h = (2*g + 4*h);
+    i = (4*i + 2*j);
+    j = (2*i + 4*j);
+    k = (4*k + 2*l);
+    l = (2*k + 4*l);
+
+	for(m=0;m<val4/10;m++) {
+        r = rand() %8;
+        angle1 = atan (a/b); /*correspond au tetha de l'énoncé PDF*/
+        angle2 = atan (c/d);
+        angle3 = atan (e/f);
+        angle4 = atan (g/h);
+        angle5 = atan (i/j);
+        angle6 = atan (k/l);
+        rayon1 = sqrt(a * a + b * b); /* r du pdf*/
+        rayon2 = sqrt(c * c + d * d);
+        rayon3 = sqrt(e * e + f * f);
+        rayon4 = sqrt(g * g + h * h);
+        rayon5 = sqrt(i * i + j * j);
+        rayon6 = sqrt(k * k + l * l);
+
+
+        if (r == 1){  /* Heart*/
+        a = rayon1 * sin(angle1 * rayon1);
+        b = rayon1 * (- cos( angle1 * rayon1));
+        c = rayon2 * sin(angle2 * rayon2);
+        d = rayon2 * (- cos( angle2 * rayon2));
+        e = rayon3 * sin(angle3 * rayon3);
+        f = rayon3 * (- cos( angle3 * rayon3));
+        g = rayon4 * sin(angle4 * rayon4);
+        h = rayon4 * (- cos( angle4 * rayon4));
+        i = rayon5 * sin(angle5 * rayon5);
+        j = rayon5 * (- cos( angle5 * rayon5));
+        k = rayon6 * sin(angle6 * rayon6);
+        l = rayon6 * (- cos( angle6 * rayon6));
+        }
+
+        else if(r == 2){ /* Handkerchief*/
+        a = rayon1 *sin(angle1+ rayon1);
+        b = cos (angle1 - rayon1);
+        c = rayon2 *sin(angle2+ rayon2);
+        d = cos (angle2 - rayon2);
+        e = rayon3 *sin(angle3+ rayon3);
+        f = cos (angle3 - rayon3);
+        g = rayon4 *sin(angle4+ rayon4);
+        h = cos (angle4 - rayon4);
+        i = rayon5 *sin(angle5+ rayon5);
+        j = cos (angle5 - rayon5);
+        k = rayon6 *sin(angle6+ rayon6);
+        l = cos (angle6 - rayon6);
+        }
+
+        else if(r == 3 || r == 4){ /* Swirl*/
+        a = a * sin(pow(rayon1,2)) - b * cos (pow(rayon1,2));
+        b = a * cos(pow(rayon1,2)) + b * sin (pow(rayon1,2));
+        c = c * sin(pow(rayon2,2)) - d * cos (pow(rayon2,2));
+        d = c * cos(pow(rayon2,2)) + d * sin (pow(rayon2,2));
+        e = e * sin(pow(rayon3,2)) - f * cos (pow(rayon3,2));
+        f = e * cos(pow(rayon3,2)) + f * sin (pow(rayon3,2));
+        g = g * sin(pow(rayon4,2)) - h * cos (pow(rayon4,2));
+        h = g * cos(pow(rayon4,2)) + h * sin (pow(rayon4,2));
+        i = i * sin(pow(rayon5,2)) - j * cos (pow(rayon5,2));
+        j = i * cos(pow(rayon5,2)) + j * sin (pow(rayon5,2));
+        k = k * sin(pow(rayon6,2)) - l * cos (pow(rayon6,2));
+        l = k * cos(pow(rayon6,2)) + l * sin (pow(rayon6,2));
+        }
+
+        else if(r == 5 || r == 6){ /*Spiral*/
+        a = 1/rayon1*(cos(angle1) + sin(rayon1));
+        b = 1/rayon1*(sin(angle1) - cos(rayon1));
+        c = 1/rayon2*(cos(angle2) + sin(rayon2));
+        d = 1/rayon2*(sin(angle2) - cos(rayon2));
+        e = 1/rayon3*(cos(angle3) + sin(rayon3));
+        f = 1/rayon3*(sin(angle3) - cos(rayon3));
+        g = 1/rayon4*(cos(angle4) + sin(rayon4));
+        h = 1/rayon4*(sin(angle4) - cos(rayon4));
+        i = 1/rayon5*(cos(angle5) + sin(rayon5));
+        j = 1/rayon5*(sin(angle5) - cos(rayon5));
+        k = 1/rayon6*(cos(angle6) + sin(rayon6));
+        l = 1/rayon6*(sin(angle6) - cos(rayon6));
+        }
+
+        else{ /* hyperbolic*/
+        a = sin(angle1)/rayon1;
+        b = rayon1 * cos(angle1);
+        c = sin(angle2)/rayon2;
+        d = rayon2 * cos(angle2);
+        e = sin(angle3)/rayon3;
+        f = rayon3 * cos(angle3);
+        g = sin(angle4)/rayon4;
+        h = rayon4 * cos(angle4);
+        i = sin(angle5)/rayon5;
+        j = rayon5 * cos(angle5);
+        k = sin(angle6)/rayon6;
+        l = rayon6 * cos(angle6);
+        }
+
+    /*on centre la position du pixel au milieu de l'écran*/
+    position1.x = (a * zoom + image_x / 2)+abs;
+    position1.y = (b * zoom + image_y / 2)+ord;
+    position2.x = (c * zoom + image_x / 2)+abs;
+    position2.y = (d * zoom + image_y / 2)+ord;
+    position3.x = (e * zoom + image_x / 2)+abs;
+    position3.y = (f * zoom + image_y / 2)+ord;
+    position4.x = (g * zoom + image_x / 2)+abs;
+    position4.y = (h * zoom + image_y / 2)+ord;
+    position5.x = (i * zoom + image_x / 2)+abs;
+    position5.y = (j * zoom + image_y / 2)+ord;
+    position6.x = (k * zoom + image_x / 2)+abs;
+    position6.y = (l * zoom + image_y / 2)+ord;
+
+     if (m >= 20){
+		if ((position1.x < image_x) && (position1.y < image_y) && (position1.x >=0) && (position1.y >=0)){
+		tab[(int)position1.x][(int)position1.y] = tab[(int)position1.x][(int)position1.y] +10;
+		}
+		if ((position2.x < image_x) && (position2.y < image_y) && (position2.x >=0) && (position2.y >=0)){
+		tab[(int)position2.x][(int)position2.y] = tab[(int)position2.x][(int)position2.y]+10;
+		}
+		if ((position3.x < image_x) && (position3.y < image_y) && (position3.x >=0) && (position3.y >=0)){
+		tab[(int)position3.x][(int)position3.y] =tab[(int)position3.x][(int)position3.y]+10;
+		}
+		if ((position4.x < image_x) && (position4.y < image_y) && (position4.x >=0) && (position4.y >=0)){
+		tab[(int)position4.x][(int)position4.y] = tab[(int)position4.x][(int)position4.y] +10;
+		}
+		if ((position5.x < image_x) && (position5.y < image_y) && (position5.x >=0) && (position5.y >=0)){
+		tab[(int)position5.x][(int)position5.y] = tab[(int)position5.x][(int)position5.y]+10;
+		}
+		if ((position6.x < image_x) && (position6.y < image_y) && (position6.x >=0) && (position6.y >=0)){
+		tab[(int)position6.x][(int)position6.y] =tab[(int)position6.x][(int)position6.y]+10;
+		}
+        }
+	}
+
+	for (ja=0;ja<image_x; ja++){
+		for (ka=0;ka<image_y; ka++){
+			if(ja > 0 && ka > 0 && ja < image_x-1 && ka < image_y-1){
+				couleur=(tab[ja-1][ka-1]+tab[ja-1][ka]+tab[ja-1][ka+1]+tab[ja][ka-1]+tab[ja][ka+1]+tab[ja+1][ka-1]+tab[ja+1][ka]+tab[ja+1][ka+1])/8;
+			}
+			
+			position1.x = ja;
+			position1.y = ka;
+			
+			SDL_FillRect(pixel99, NULL, SDL_MapRGB(pixel99->format, 0, couleur, 0));
+			SDL_BlitSurface(pixel99, NULL, ecran, &position1);
+		}
+	}
+
+    /*SDL_Flip(ecran);*/
+     while (continuer)
+        {
+        SDL_PollEvent(&event);
+        if( event.type == SDL_MOUSEBUTTONUP ){
+                    if( event.button.button == SDL_BUTTON_WHEELUP ){
+                                zoom=zoom+10;
+continuer = 0;
+                                Hyperbolic(zoom,abs,ord,tab);
+
+                    }
+
+                }
+                else if( event.type == SDL_MOUSEBUTTONDOWN ){
+                    if( event.button.button == SDL_BUTTON_WHEELDOWN ){
+                                zoom=zoom-10;
+continuer = 0;
+                                Hyperbolic(zoom,abs,ord,tab);
+                    }
+
+                }
+
+                switch(event.type){
+                    case SDL_QUIT:
+                        continuer = 0;
+                        break;
+                    case SDL_KEYDOWN:
+                        switch(event.key.keysym.sym){
+                                case SDLK_UP:
+                                    ord=ord+100;
+continuer = 0;
+                                   Hyperbolic(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_DOWN:
+                                    ord=ord-100;
+continuer = 0;
+                                    Hyperbolic(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_RIGHT:
+                                    abs=abs+100;
+continuer = 0;
+                                    Hyperbolic(zoom,abs,ord,tab);
+                                    break;
+                                case SDLK_LEFT:
+                                    abs=abs-100;
+continuer = 0;
+                                    Hyperbolic(zoom,abs,ord,tab);
+                                    break;
+                            }
+                            break;
+                }
+    SDL_Flip(ecran);
+          }
+
+    libererMem(ecran, pixel99);
+
+}

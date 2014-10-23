@@ -1,0 +1,7 @@
+PROJECT_NAME           = Fractale
+PROJECT_BRIEF          = Progamme affichant differentes fractales utilisant le meme algorithme que Mandelbrot
+PROJECT_NUMBER         = 1.0
+OUTPUT_DIRECTORY       = doc
+OUTPUT_LANGUAGE        = French
+INPUT                  = src
+FILE_PATTERNS          = *.h *.c

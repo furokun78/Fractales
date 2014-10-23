@@ -1,0 +1,6 @@
+#ifndef DEF_IFS
+#define DEF_IFS
+
+void fractale(int choix,float zoom, int abs,int ord);
+
+#endif

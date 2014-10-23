@@ -1,0 +1,19 @@
+Pour compiler le projet : 
+- placer le dossier fractal n'importe ou dans l'ordinateur
+- rendez vous avec le terminal dans le dossier fractale
+- pour compiler, tapper la commande make
+
+Pour supprimer les fichier .0 :
+-une fois dans le dossier, tapper make clean
+
+Pour supprimer les fichier .0, l'executable, la doc et le dossier bin et doc :
+-une fois dans le dossier, tapper make very-clean
+
+Pour avoir la doc :
+- une fois dans le dossier, tapper make doc
+
+Pour lancer le programme, tapper :
+- make compile1 pour avoir un premier type de fractale
+- make compile2 pour avoir un deuxieme type de fractale
+- make compile3 pour avoir le fractale de Julia
+- make compile4 pour avoir le fractale de Mandelbrot
